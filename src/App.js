@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Code, 
   Terminal, 
@@ -29,15 +29,50 @@ import {
   Users,
   Target,
   BookOpen,
-  Briefcase
+  Briefcase,
+  Cloud,
+  Snowflake,
+  CloudRain,
+  Sparkles,
+  Palette,
+  Music,
+  Droplets,
+  Wind,
+  Sunset,
+  Bug
 } from 'lucide-react';
 
 const VishnuDeveloperOS = () => {
   const [currentView, setCurrentView] = useState('boot');
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState('auto'); // auto, light, dark
+  const [background, setBackground] = useState('auto'); // auto, particles, rain, snow, dust, sun, stars, fireflies, butterflies
   const [openWindows, setOpenWindows] = useState([]);
   const [bootComplete, setBootComplete] = useState(false);
   const [bootText, setBootText] = useState('');
+  const [transitioning, setTransitioning] = useState(false);
+
+  // Determine if dark mode should be used
+  const darkMode = useMemo(() => {
+    if (theme === 'auto') {
+      const hour = new Date().getHours();
+      return hour < 6 || hour > 18; // Dark mode between 6 PM and 6 AM
+    }
+    return theme === 'dark';
+  }, [theme]);
+
+  // Determine background based on time or user preference
+  const currentBackground = useMemo(() => {
+    if (background === 'auto') {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 8) return 'butterflies'; // Dawn
+      if (hour >= 8 && hour < 12) return 'sun'; // Morning
+      if (hour >= 12 && hour < 17) return 'dust'; // Afternoon
+      if (hour >= 17 && hour < 20) return 'particles'; // Evening
+      if (hour >= 20 && hour < 22) return 'fireflies'; // Dusk
+      return 'stars'; // Night
+    }
+    return background;
+  }, [background]);
 
   // Boot sequence effect
   useEffect(() => {
@@ -56,7 +91,7 @@ const VishnuDeveloperOS = () => {
     }
   }, [currentView]);
 
-  // Particle background component
+  // Enhanced Particle Background Components
   const ParticleBackground = () => {
     const canvasRef = useRef(null);
     
@@ -75,33 +110,262 @@ const VishnuDeveloperOS = () => {
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
       
-      for (let i = 0; i < 50; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          size: Math.random() * 2 + 1,
-          opacity: Math.random() * 0.5 + 0.2
-        });
-      }
+      // Create particles based on background type
+      const createParticles = () => {
+        particles.length = 0;
+        let particleCount;
+        
+        switch (currentBackground) {
+          case 'dust':
+            particleCount = 120;
+            break;
+          case 'rain':
+            particleCount = 200;
+            break;
+          case 'snow':
+            particleCount = 100;
+            break;
+          case 'butterflies':
+            particleCount = 15;
+            break;
+          case 'fireflies':
+            particleCount = 30;
+            break;
+          default:
+            particleCount = 60;
+        }
+        
+        for (let i = 0; i < particleCount; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: currentBackground === 'rain' ? (Math.random() - 0.5) * 0.5 :
+                currentBackground === 'snow' ? (Math.random() - 0.5) * 0.3 :
+                currentBackground === 'butterflies' ? (Math.random() - 0.5) * 1.5 :
+                currentBackground === 'fireflies' ? (Math.random() - 0.5) * 0.8 :
+                (Math.random() - 0.5) * 0.5,
+            vy: currentBackground === 'rain' ? Math.random() * 8 + 4 :
+                currentBackground === 'snow' ? Math.random() * 2 + 0.5 :
+                currentBackground === 'butterflies' ? (Math.random() - 0.5) * 2 :
+                currentBackground === 'fireflies' ? (Math.random() - 0.5) * 1 :
+                (Math.random() - 0.5) * 0.5,
+            size: currentBackground === 'dust' ? Math.random() * 1.5 + 0.5 :
+                  currentBackground === 'rain' ? Math.random() * 4 + 2 :
+                  currentBackground === 'snow' ? Math.random() * 6 + 3 :
+                  currentBackground === 'butterflies' ? Math.random() * 8 + 6 :
+                  currentBackground === 'fireflies' ? Math.random() * 3 + 2 :
+                  Math.random() * 3 + 1,
+            opacity: currentBackground === 'fireflies' ? Math.random() * 0.8 + 0.2 :
+                    Math.random() * 0.6 + 0.2,
+            angle: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.04,
+            wingPhase: Math.random() * Math.PI * 2, // For butterflies
+            glowPhase: Math.random() * Math.PI * 2, // For fireflies
+            color: currentBackground === 'butterflies' ? 
+                   ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][Math.floor(Math.random() * 6)] :
+                   currentBackground === 'fireflies' ?
+                   ['#FFD700', '#90EE90', '#87CEEB', '#FFB6C1'][Math.floor(Math.random() * 4)] :
+                   null
+          });
+        }
+      };
+
+      createParticles();
       
       const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         particles.forEach(particle => {
-          particle.x += particle.vx;
-          particle.y += particle.vy;
+          // Update position based on background type
+          if (currentBackground === 'rain') {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            if (particle.y > canvas.height) {
+              particle.y = -10;
+              particle.x = Math.random() * canvas.width;
+            }
+            if (particle.x < 0 || particle.x > canvas.width) {
+              particle.x = Math.random() * canvas.width;
+            }
+          } else if (currentBackground === 'snow') {
+            particle.x += Math.sin(particle.angle) * 0.5 + particle.vx;
+            particle.y += particle.vy;
+            particle.angle += 0.008;
+            if (particle.y > canvas.height) {
+              particle.y = -10;
+              particle.x = Math.random() * canvas.width;
+            }
+          } else if (currentBackground === 'butterflies') {
+            particle.x += particle.vx + Math.sin(particle.wingPhase) * 0.5;
+            particle.y += particle.vy + Math.cos(particle.wingPhase * 0.8) * 0.3;
+            particle.wingPhase += 0.1;
+            particle.angle += particle.spin * 0.5;
+            
+            // Boundary bouncing
+            if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+          } else if (currentBackground === 'fireflies') {
+            particle.x += particle.vx + Math.sin(particle.glowPhase) * 0.2;
+            particle.y += particle.vy + Math.cos(particle.glowPhase * 1.2) * 0.2;
+            particle.glowPhase += 0.05;
+            
+            // Glowing effect
+            particle.opacity = 0.3 + Math.sin(particle.glowPhase * 2) * 0.5;
+            
+            // Boundary bouncing
+            if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+          } else {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+          }
           
-          if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-          if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+          // Draw particles with different styles
+          ctx.save();
+          ctx.translate(particle.x, particle.y);
+          ctx.rotate(particle.angle);
           
-          ctx.beginPath();
-          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-          ctx.fillStyle = darkMode 
-            ? `rgba(59, 130, 246, ${particle.opacity})` 
-            : `rgba(99, 102, 241, ${particle.opacity})`;
-          ctx.fill();
+          if (currentBackground === 'rain') {
+            const gradient = ctx.createLinearGradient(0, -particle.size, 0, particle.size);
+            gradient.addColorStop(0, darkMode ? `rgba(173, 216, 230, ${particle.opacity})` : `rgba(70, 130, 180, ${particle.opacity})`);
+            gradient.addColorStop(1, darkMode ? `rgba(100, 149, 237, ${particle.opacity * 0.3})` : `rgba(70, 130, 180, ${particle.opacity * 0.5})`);
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -particle.size);
+            ctx.lineTo(0, particle.size);
+            ctx.stroke();
+          } else if (currentBackground === 'snow') {
+            ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(0, 0, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Snowflake pattern
+            ctx.strokeStyle = `rgba(255, 255, 255, ${particle.opacity * 0.7})`;
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 6; i++) {
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.lineTo(0, -particle.size * 0.7);
+              ctx.stroke();
+              ctx.rotate(Math.PI / 3);
+            }
+          } else if (currentBackground === 'dust') {
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, particle.size);
+            gradient.addColorStop(0, darkMode ? `rgba(255, 215, 0, ${particle.opacity * 0.4})` : `rgba(255, 165, 0, ${particle.opacity * 0.6})`);
+            gradient.addColorStop(1, `rgba(255, 215, 0, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (currentBackground === 'sun') {
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, particle.size);
+            gradient.addColorStop(0, `rgba(255, 215, 0, ${particle.opacity})`);
+            gradient.addColorStop(0.7, `rgba(255, 165, 0, ${particle.opacity * 0.5})`);
+            gradient.addColorStop(1, `rgba(255, 69, 0, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(0, 0, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (currentBackground === 'butterflies') {
+            // Butterfly body
+            ctx.fillStyle = `rgba(139, 69, 19, ${particle.opacity})`;
+            ctx.fillRect(-1, -particle.size * 0.4, 2, particle.size * 0.8);
+            
+            // Wings
+            const wingColor = particle.color;
+            ctx.fillStyle = wingColor.replace(')', `, ${particle.opacity})`).replace('rgb', 'rgba');
+            
+            // Left wing
+            ctx.beginPath();
+            ctx.ellipse(-particle.size * 0.3, -particle.size * 0.2, particle.size * 0.4, particle.size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-particle.size * 0.2, particle.size * 0.1, particle.size * 0.3, particle.size * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right wing
+            ctx.beginPath();
+            ctx.ellipse(particle.size * 0.3, -particle.size * 0.2, particle.size * 0.4, particle.size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(particle.size * 0.2, particle.size * 0.1, particle.size * 0.3, particle.size * 0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Wing animation effect
+            ctx.globalAlpha = Math.sin(particle.wingPhase) * 0.3 + 0.7;
+          } else if (currentBackground === 'fireflies') {
+            // Firefly body
+            ctx.fillStyle = `rgba(50, 50, 50, ${particle.opacity * 0.8})`;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, particle.size * 0.3, particle.size * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Glowing light
+            const glowIntensity = Math.sin(particle.glowPhase * 3) * 0.5 + 0.5;
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, particle.size * 2);
+            const glowColor = particle.color;
+            gradient.addColorStop(0, glowColor.replace(')', `, ${particle.opacity * glowIntensity})`).replace('rgb', 'rgba'));
+            gradient.addColorStop(0.5, glowColor.replace(')', `, ${particle.opacity * glowIntensity * 0.3})`).replace('rgb', 'rgba'));
+            gradient.addColorStop(1, `rgba(255, 255, 0, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, particle.size * 0.2, particle.size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (currentBackground === 'stars') {
+            ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+            
+            // Star shape
+            const spikes = 5;
+            const outerRadius = particle.size;
+            const innerRadius = particle.size * 0.4;
+            
+            ctx.beginPath();
+            for (let i = 0; i < spikes * 2; i++) {
+              const radius = i % 2 === 0 ? outerRadius : innerRadius;
+              const angle = (i * Math.PI) / spikes;
+              const x = Math.cos(angle) * radius;
+              const y = Math.sin(angle) * radius;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add twinkling effect
+            if (Math.random() < 0.02) {
+              particle.opacity = Math.random() * 0.5 + 0.2;
+            }
+          } else {
+            // Default particles
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, particle.size);
+            gradient.addColorStop(0, darkMode 
+              ? `rgba(59, 130, 246, ${particle.opacity})` 
+              : `rgba(99, 102, 241, ${particle.opacity})`);
+            gradient.addColorStop(1, darkMode 
+              ? `rgba(59, 130, 246, 0)` 
+              : `rgba(99, 102, 241, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          ctx.restore();
+          
+          if (currentBackground !== 'rain' && currentBackground !== 'snow' && currentBackground !== 'butterflies' && currentBackground !== 'fireflies') {
+            particle.angle += particle.spin;
+          }
         });
         
         requestAnimationFrame(animate);
@@ -112,7 +376,7 @@ const VishnuDeveloperOS = () => {
       return () => {
         window.removeEventListener('resize', resizeCanvas);
       };
-    }, [darkMode]);
+    }, [currentBackground, darkMode]);
     
     return <canvas ref={canvasRef} className="absolute inset-0 z-0" />;
   };
@@ -170,24 +434,36 @@ const VishnuDeveloperOS = () => {
 
   // Boot screen component
   const BootScreen = () => (
-    <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <div className={`min-h-screen flex items-center justify-center transition-all duration-1000 ${
+      darkMode ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900' : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+    }`}>
       <ParticleBackground />
       <div className="relative z-10 text-center">
         <div className="mb-8">
-          <h1 className={`text-6xl font-bold mb-4 transition-all duration-1000 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className={`text-6xl font-bold mb-4 transition-all duration-1000 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          } animate-pulse`}>
             VISHNU.DEV
           </h1>
-          <div className={`h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto transition-all duration-2000 ${bootText ? 'w-full' : 'w-0'}`} />
+          <div className={`h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 mx-auto transition-all duration-2000 ${
+            bootText ? 'w-full' : 'w-0'
+          }`} />
         </div>
         
-        <div className={`text-lg mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <div className={`text-lg mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'} font-mono`}>
           {bootText}
         </div>
         
         {bootComplete && (
           <button
-            onClick={() => setCurrentView('desktop')}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+            onClick={() => {
+              setTransitioning(true);
+              setTimeout(() => {
+                setCurrentView('desktop');
+                setTransitioning(false);
+              }, 800);
+            }}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg animate-bounce"
           >
             Enter System
           </button>
@@ -196,14 +472,152 @@ const VishnuDeveloperOS = () => {
     </div>
   );
 
+  // Theme and Background Selector Component
+  const ControlPanel = ({ isOpen, onClose }) => {
+    const themes = [
+      { id: 'auto', name: 'Auto', icon: Sun, description: 'Follows time of day' },
+      { id: 'light', name: 'Light', icon: Sun, description: 'Always light mode' },
+      { id: 'dark', name: 'Dark', icon: Moon, description: 'Always dark mode' }
+    ];
+
+    const backgrounds = [
+      { id: 'auto', name: 'Auto', icon: Sparkles, description: 'Changes with time' },
+      { id: 'particles', name: 'Particles', icon: Sparkles, description: 'Floating particles' },
+      { id: 'rain', name: 'Rain', icon: CloudRain, description: 'Animated raindrops' },
+      { id: 'snow', name: 'Snow', icon: Snowflake, description: 'Falling snowflakes' },
+      { id: 'dust', name: 'Dust', icon: Cloud, description: 'Floating dust particles' },
+      { id: 'sun', name: 'Sunshine', icon: Sun, description: 'Warm sun particles' },
+      { id: 'stars', name: 'Stars', icon: Star, description: 'Twinkling stars' },
+      { id: 'fireflies', name: 'Fireflies', icon: Bug, description: 'Glowing fireflies' },
+      { id: 'butterflies', name: 'Butterflies', icon: Wind, description: 'Colorful butterflies' }
+    ];
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto`}>
+          <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
+              <Palette className="w-6 h-6 text-purple-500" />
+              Customize Experience
+            </h2>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-lg hover:bg-opacity-80 transition-colors ${
+                darkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="p-6 space-y-8">
+            {/* Theme Selection */}
+            <div>
+              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Theme Preference
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                {themes.map((themeOption) => (
+                  <button
+                    key={themeOption.id}
+                    onClick={() => setTheme(themeOption.id)}
+                    className={`p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 ${
+                      theme === themeOption.id
+                        ? 'border-purple-500 bg-purple-500/10'
+                        : darkMode
+                        ? 'border-gray-600 bg-gray-700/30 hover:border-gray-500'
+                        : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                    }`}
+                  >
+                    <themeOption.icon className={`w-8 h-8 mx-auto mb-2 ${
+                      theme === themeOption.id ? 'text-purple-500' : darkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`} />
+                    <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {themeOption.name}
+                    </div>
+                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                      {themeOption.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Background Selection */}
+            <div>
+              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Background Animation
+              </h3>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                {backgrounds.map((bg) => (
+                  <button
+                    key={bg.id}
+                    onClick={() => setBackground(bg.id)}
+                    className={`p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 ${
+                      background === bg.id
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : darkMode
+                        ? 'border-gray-600 bg-gray-700/30 hover:border-gray-500'
+                        : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                    }`}
+                  >
+                    <bg.icon className={`w-6 h-6 mx-auto mb-2 ${
+                      background === bg.id ? 'text-blue-500' : darkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`} />
+                    <div className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {bg.name}
+                    </div>
+                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                      {bg.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/30' : 'bg-gray-100'} text-center`}>
+              <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-2`}>
+                Current Settings Preview
+              </div>
+              <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Theme: {themes.find(t => t.id === theme)?.name} | 
+                Background: {backgrounds.find(b => b.id === background)?.name}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Window component for OS-style interfaces
   const Window = ({ title, children, onClose, className = "" }) => (
-    <div className={`fixed inset-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl z-50 ${className} transition-all duration-300 backdrop-blur-sm`}>
+    <div 
+      className={`fixed inset-4 ${darkMode ? 'bg-gray-800/95 opacity-0 bg-black' : 'bg-white/95 opacity-0 bg-white' } rounded-xl shadow-2xl z-40 ${className} transition-all duration-500 backdrop-blur-md border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+      style={{
+        animation: 'slideIn 0.5s ease-out forwards'
+      }}
+    >
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+      `}</style>
       <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500" />
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition-colors cursor-pointer" onClick={onClose} />
+          <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors cursor-pointer" />
+          <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors cursor-pointer" />
           <span className={`ml-4 font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {title}
           </span>
@@ -223,6 +637,8 @@ const VishnuDeveloperOS = () => {
 
   // Desktop component
   const Desktop = () => {
+    const [controlPanelOpen, setControlPanelOpen] = useState(false);
+
     const apps = [
       { id: 'dashboard', name: 'Dashboard', icon: Monitor, color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
       { id: 'projects', name: 'Projects', icon: Code, color: 'bg-gradient-to-br from-green-500 to-green-600' },
@@ -233,16 +649,28 @@ const VishnuDeveloperOS = () => {
 
     const openWindow = (appId) => {
       if (!openWindows.includes(appId)) {
-        setOpenWindows([...openWindows, appId]);
+        setTransitioning(true);
+        setTimeout(() => {
+          setOpenWindows([...openWindows, appId]);
+          setTransitioning(false);
+        }, 300);
       }
     };
 
     const closeWindow = (appId) => {
-      setOpenWindows(openWindows.filter(id => id !== appId));
+      setTransitioning(true);
+      setTimeout(() => {
+        setOpenWindows(openWindows.filter(id => id !== appId));
+        setTransitioning(false);
+      }, 200);
     };
 
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} relative transition-colors duration-300`}>
+      <div className={`min-h-screen transition-all duration-1000 ${
+        darkMode 
+          ? 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900' 
+          : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+      } relative overflow-hidden`}>
         <ParticleBackground />
         
         {/* Desktop Grid */}
@@ -251,14 +679,31 @@ const VishnuDeveloperOS = () => {
             {apps.map((app, index) => (
               <div
                 key={app.id}
-                className="flex flex-col items-center gap-2 cursor-pointer transition-all hover:scale-110 group"
+                className="flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 hover:scale-110 group"
                 onClick={() => openWindow(app.id)}
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  animation: 'fadeInUp 0.6s ease-out forwards'
+                }}
               >
-                <div className={`w-16 h-16 ${app.color} rounded-xl flex items-center justify-center shadow-lg transition-all hover:shadow-xl group-hover:rotate-3`}>
-                  <app.icon className="text-white" size={32} />
+                <style jsx>{`
+                  @keyframes fadeInUp {
+                    from {
+                      opacity: 0;
+                      transform: translateY(30px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                `}</style>
+                <div className={`w-16 h-16 ${app.color} rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-2xl group-hover:rotate-3 group-hover:scale-110`}>
+                  <app.icon className="text-white transition-all duration-300 group-hover:scale-110" size={32} />
                 </div>
-                <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'} transition-all group-hover:text-blue-500`}>
+                <span className={`text-sm transition-all duration-300 group-hover:text-blue-500 font-medium ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>
                   {app.name}
                 </span>
               </div>
@@ -267,16 +712,24 @@ const VishnuDeveloperOS = () => {
         </div>
 
         {/* Taskbar */}
-        <div className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-2`}>
+        <div className={`fixed bottom-0 left-0 right-0 transition-all duration-500 ${
+          darkMode ? 'bg-gray-800/90' : 'bg-white/90'
+        } backdrop-blur-md border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-3 shadow-2xl`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`px-4 py-2 ${darkMode ? 'text-white' : 'text-gray-900'} font-mono text-sm font-bold`}>
+              <div className={`px-4 py-2 font-mono text-sm font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg shadow-lg ${
+                darkMode ? '' : 'shadow-purple-200'
+              }`}>
                 VISHNU.DEV OS
               </div>
               {openWindows.map(windowId => (
                 <button
                   key={windowId}
-                  className={`px-3 py-1 rounded ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'} text-sm transition-all hover:bg-opacity-80 hover:scale-105`}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all duration-300 hover:scale-105 ${
+                    darkMode 
+                      ? 'bg-gray-700/80 text-white hover:bg-gray-600' 
+                      : 'bg-gray-200/80 text-gray-900 hover:bg-gray-300'
+                  } backdrop-blur-sm shadow-md`}
                 >
                   {apps.find(app => app.id === windowId)?.name}
                 </button>
@@ -284,17 +737,45 @@ const VishnuDeveloperOS = () => {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded transition-all ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'} hover:scale-110`}
+                onClick={() => setControlPanelOpen(true)}
+                className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 ${
+                  darkMode 
+                    ? 'bg-gray-700/80 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200/80 text-gray-900 hover:bg-gray-300'
+                } backdrop-blur-sm shadow-md`}
+                title="Customize"
+              >
+                <Palette size={16} />
+              </button>
+              <button
+                onClick={() => setTheme(darkMode ? 'light' : 'dark')}
+                className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 ${
+                  darkMode 
+                    ? 'bg-gray-700/80 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200/80 text-gray-900 hover:bg-gray-300'
+                } backdrop-blur-sm shadow-md`}
               >
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
-              <div className={`px-3 py-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div className={`px-3 py-1 text-sm font-mono ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              } bg-black/10 rounded-lg backdrop-blur-sm`}>
                 {new Date().toLocaleTimeString()}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Control Panel */}
+        <ControlPanel 
+          isOpen={controlPanelOpen} 
+          onClose={() => setControlPanelOpen(false)} 
+        />
+
+        {/* Transition Overlay */}
+        {transitioning && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-all duration-300" />
+        )}
 
         {/* Open Windows */}
         {openWindows.map(windowId => {
@@ -335,7 +816,7 @@ const VishnuDeveloperOS = () => {
                   key="terminal"
                   title="Terminal"
                   onClose={() => closeWindow('terminal')}
-                  className={darkMode ? 'bg-gray-900' : 'bg-gray-800'}
+                  className={darkMode ? 'bg-gray-900/95' : 'bg-gray-800/95'}
                 >
                   <TerminalContent />
                 </Window>
@@ -989,49 +1470,53 @@ const VishnuDeveloperOS = () => {
               {demos.find(d => d.id === selectedDemo)?.icon && 
                 React.createElement(demos.find(d => d.id === selectedDemo).icon, { size: 24, className: 'text-blue-500' })
               }
-              {demos.find(d => d.id === selectedDemo)?.title} Demo
+              {demos.find(d => d.id === selectedDemo)?.title}
             </h3>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Input
                 </label>
                 <textarea
                   value={demoInput}
                   onChange={(e) => setDemoInput(e.target.value)}
                   placeholder={demos.find(d => d.id === selectedDemo)?.inputPlaceholder}
-                  className={`w-full h-32 p-4 rounded-lg border transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  className={`w-full h-32 p-3 border rounded-lg resize-none ${
+                    darkMode 
+                      ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   }`}
                 />
                 <button
                   onClick={runDemo}
-                  disabled={isProcessing || !demoInput.trim()}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={!demoInput.trim() || isProcessing}
+                  className="mt-3 w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <Zap size={16} />
+                      <Play size={16} />
                       Run Demo
                     </>
                   )}
                 </button>
               </div>
               
-              <div className="space-y-4">
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Output
                 </label>
-                <pre className={`w-full h-40 p-4 rounded-lg border text-sm overflow-auto transition-all font-mono ${
-                  darkMode ? 'bg-gray-800 border-gray-600 text-green-400' : 'bg-gray-50 border-gray-300 text-gray-900'
+                <pre className={`w-full h-32 p-3 border rounded-lg text-xs overflow-auto ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-600 text-green-400' 
+                    : 'bg-gray-50 border-gray-300 text-green-600'
                 }`}>
-                  {demoOutput || 'AI output will appear here after processing...'}
+                  {demoOutput || 'Results will appear here...'}
                 </pre>
               </div>
             </div>
@@ -1041,349 +1526,149 @@ const VishnuDeveloperOS = () => {
     );
   };
 
-  // Terminal content
+  // Terminal Content
   const TerminalContent = () => {
-    const [currentInput, setCurrentInput] = useState('');
+    const [input, setInput] = useState('');
     const [history, setHistory] = useState([
-      { type: 'system', content: '██╗   ██╗██╗███████╗██╗  ██╗███╗   ██╗██╗   ██╗    ██████╗ ███████╗██╗   ██╗' },
-      { type: 'system', content: '██║   ██║██║██╔════╝██║  ██║████╗  ██║██║   ██║    ██╔══██╗██╔════╝██║   ██║' },
-      { type: 'system', content: '██║   ██║██║███████╗███████║██╔██╗ ██║██║   ██║    ██║  ██║█████╗  ██║   ██║' },
-      { type: 'system', content: '╚██╗ ██╔╝██║╚════██║██╔══██║██║╚██╗██║██║   ██║    ██║  ██║██╔══╝  ╚██╗ ██╔╝' },
-      { type: 'system', content: ' ╚████╔╝ ██║███████║██║  ██║██║ ╚████║╚██████╔╝    ██████╔╝███████╗ ╚████╔╝ ' },
-      { type: 'system', content: '  ╚═══╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝     ╚═════╝ ╚══════╝  ╚═══╝  ' },
-      { type: 'system', content: '' },
-      { type: 'system', content: 'Welcome to Vishnu Developer Terminal v2.0' },
-      { type: 'system', content: 'Enhanced with AI capabilities | Type "help" for commands' },
-      { type: 'system', content: '' }
+      '~ Welcome to VISHNU.DEV Terminal',
+      '~ Type "help" for available commands',
+      ''
     ]);
 
     const commands = {
-      help: `Available commands:
-├── System Commands
-│   ├── help          Show this help menu
-│   ├── clear         Clear terminal screen
-│   ├── whoami        Display user information
-│   └── date          Show current date and time
-├── Portfolio Commands
-│   ├── projects      List all projects
-│   ├── skills        Display technical skills
-│   ├── experience    Show work experience
-│   └── contact       Contact information
-├── AI Commands
-│   ├── ai-status     Check AI system status
-│   ├── models        List available AI models
-│   └── ask [query]   Ask AI a question
-└── Fun Commands
-    ├── matrix        Enter the matrix
-    ├── hack          Simulate hacking sequence
-    └── coffee        Essential developer fuel status`,
-      
-      ls: `total 42
-drwxr-xr-x  8 vishnu staff   256 Aug 22 2025 ./
-drwxr-xr-x  3 root   staff    96 Aug 22 2025 ../
--rw-r--r--  1 vishnu staff  2048 Aug 22 2025 about.txt
-drwxr-xr-x  4 vishnu staff   128 Aug 22 2025 projects/
-drwxr-xr-x  3 vishnu staff    96 Aug 22 2025 skills/
-drwxr-xr-x  2 vishnu staff    64 Aug 22 2025 ai-models/
--rw-r--r--  1 vishnu staff  1024 Aug 22 2025 resume.pdf
--rw-r--r--  1 vishnu staff   512 Aug 22 2025 contact.vcard`,
-
-      projects: `📁 Active Projects:
-┌─────────────────────────────────────────────────────────────────┐
-│ 🧠 SpineSight AI        │ Status: Live      │ Users: 2.5K+      │
-│ 🌍 EcoTracker Pro       │ Status: Live      │ Users: 15K+       │
-│ 💬 Neural Chat Engine   │ Status: Demo      │ Users: 850+       │
-│ ☁️  CloudDeploy Suite    │ Status: Beta      │ Users: 1.2K+      │
-│ 📊 DataViz Studio       │ Status: Live      │ Users: 5.6K+      │
-│ 📚 SmartLearn AI        │ Status: Live      │ Users: 8.9K+      │
-└─────────────────────────────────────────────────────────────────┘
-Total Impact: 34K+ users | $2.5M+ revenue generated`,
-
-      skills: `🛠️ Technical Skills Matrix:
-╭─────────────────────────────────────────────────────────────────╮
-│ Frontend Development                                            │
-│ ██████████████████████ React/Next.js        95%               │
-│ ████████████████████   TypeScript           88%               │
-│ ██████████████████     Vue.js               82%               │
-│                                                                 │
-│ Backend Development                                             │
-│ ██████████████████████ Node.js/Express      92%               │
-│ ██████████████████████ Python/Django        90%               │
-│ ████████████████       Go                   75%               │
-│                                                                 │
-│ AI/Machine Learning                                             │
-│ ██████████████████████ TensorFlow/PyTorch   85%               │
-│ ████████████████████   Computer Vision      83%               │
-│ ██████████████████     NLP                  80%               │
-│                                                                 │
-│ Cloud & DevOps                                                  │
-│ ██████████████████     AWS/Azure            82%               │
-│ ████████████████       Docker/K8s           78%               │
-│ █████████████          Terraform            70%               │
-╰─────────────────────────────────────────────────────────────────╯`,
-
-      experience: `💼 Professional Journey:
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ 🏢 TechCorp Solutions                                           ┃
-┃ 👨‍💻 Senior Full Stack Developer              2022 - Present      ┃
-┃ • Lead AI-powered web application development                   ┃
-┃ • Implemented microservices architecture                       ┃
-┃ • Mentored 5+ junior developers                                ┃
-┃ • Improved system performance by 40%                           ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ 🧪 AI Innovations Lab                                           ┃
-┃ 🤖 Machine Learning Engineer                2020 - 2022        ┃
-┃ • Developed computer vision models for medical imaging         ┃
-┃ • Created NLP solutions for customer automation               ┃
-┃ • Published 3 research papers on deep learning                ┃
-┃ • Deployed 15+ ML models to production                        ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`,
-
-      contact: `📬 Contact Information:
-╔══════════════════════════════════════════════════════════════════╗
-║ 📧 Email    │ vishnu@developer.com                               ║
-║ 💼 LinkedIn │ linkedin.com/in/vishnu-dev                         ║
-║ 🐙 GitHub   │ github.com/vishnu-dev                              ║
-║ 🐦 Twitter  │ @vishnu_dev                                        ║
-║ 🌍 Location │ Available for remote work worldwide                ║
-║ 🕐 Timezone │ UTC+5:30 (India Standard Time)                    ║
-║ 💡 Status   │ Open to new opportunities                          ║
-╚══════════════════════════════════════════════════════════════════╝`,
-
-      whoami: `vishnu-developer
-├── Full Stack Developer & AI Engineer
-├── 5+ years of professional experience
-├── Specialist in React, Node.js, Python, AI/ML
-├── Published researcher in computer vision
-├── Open source contributor
-└── Coffee enthusiast ☕`,
-
-      date: new Date().toLocaleString(),
-
-      'ai-status': `🤖 AI System Status:
-┌─────────────────────────────────────────┐
-│ System Status: ✅ Online                │
-│ Models Loaded: 3/3                      │
-│ GPU Usage: 45%                          │
-│ Memory Usage: 2.1GB / 8GB               │
-│ Response Time: ~0.8s avg                │
-│ Accuracy Rate: 94.2%                    │
-└─────────────────────────────────────────┘`,
-
-      models: `🧠 Available AI Models:
-┌─────────────────────────────────────────────────────────────┐
-│ Model Name         │ Type           │ Status   │ Accuracy   │
-├─────────────────────────────────────────────────────────────┤
-│ SpineSight-v2.1    │ Computer Vision│ Active   │ 94.5%      │
-│ SentimentPro-v1.5  │ NLP           │ Active   │ 89.2%      │
-│ TextGen-GPT-v3     │ Language Model│ Active   │ 92.1%      │
-│ CodeAssist-v1.2    │ Code Analysis │ Standby  │ 87.8%      │
-└─────────────────────────────────────────────────────────────┘`,
-
-      matrix: `Wake up, Neo...
-The Matrix has you...
-Follow the white rabbit.
-
-Knock, knock, Neo.
-
-The Matrix is everywhere. It is all around us. Even now, in this very room.
-You can see it when you look out your window or when you turn on your television.
-You can feel it when you go to work... when you go to church... when you pay your taxes.`,
-
-      hack: `[INITIATING HACK SEQUENCE...]
-> Scanning network topology...
-> Exploiting buffer overflow in target system...
-> Bypassing firewall protocols...
-> Accessing mainframe database...
-> Downloading classified files...
-> Covering digital footprints...
-
-[ACCESS GRANTED] 
-Just kidding! This is a portfolio demo 😄
-Remember: Use your powers for good, not evil!`,
-
-      coffee: `☕ Coffee Status Report:
-┌─────────────────────────────────────────┐
-│ Current Level: ████████░░ 80%           │
-│ Type: Double Shot Espresso              │
-│ Temperature: Perfect ☕                  │
-│ Productivity Boost: +150%               │
-│ Lines of Code Written: 2,847            │
-│ Bugs Fixed: 23                          │
-│ Next Refill: In 45 minutes              │
-└─────────────────────────────────────────┘
-Status: Optimal coding conditions maintained`,
-
-      clear: 'clear'
+      help: () => [
+        'Available commands:',
+        '  help     - Show this help message',
+        '  about    - Display information about Vishnu',
+        '  skills   - List technical skills',
+        '  projects - Show recent projects',
+        '  contact  - Display contact information',
+        '  clear    - Clear terminal screen',
+        '  whoami   - Display current user info',
+        ''
+      ],
+      about: () => [
+        'Vishnu - Full Stack Developer & AI Engineer',
+        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+        '• 5+ years of professional experience',
+        '• Specialized in React, Node.js, Python, and AI/ML',
+        '• Passionate about creating intelligent solutions',
+        '• Based in India, working globally',
+        ''
+      ],
+      skills: () => [
+        'Technical Skills:',
+        '━━━━━━━━━━━━━━',
+        'Frontend: React, Next.js, Vue.js, TypeScript',
+        'Backend: Node.js, Python, Django, Express',
+        'AI/ML: TensorFlow, PyTorch, Scikit-learn',
+        'Database: MongoDB, PostgreSQL, Redis',
+        'Cloud: AWS, Docker, Kubernetes',
+        'Tools: Git, VS Code, Postman',
+        ''
+      ],
+      projects: () => [
+        'Recent Projects:',
+        '━━━━━━━━━━━━━━━',
+        '1. SpineSight AI - Medical imaging platform',
+        '2. EcoTracker Pro - Sustainability tracking',
+        '3. Neural Chat Engine - AI-powered chat',
+        '4. CloudDeploy Suite - DevOps automation',
+        '5. DataViz Studio - Analytics platform',
+        ''
+      ],
+      contact: () => [
+        'Contact Information:',
+        '━━━━━━━━━━━━━━━━━━━',
+        'Email: vishnu@example.com',
+        'GitHub: github.com/vishnu-dev',
+        'LinkedIn: linkedin.com/in/vishnu-dev',
+        'Portfolio: vishnu.dev',
+        ''
+      ],
+      whoami: () => [
+        'vishnu@dev-machine:~$ Full Stack Developer',
+        'Permissions: sudo, create, innovate, debug',
+        'Status: Online and ready to build amazing things!',
+        ''
+      ],
+      clear: () => {
+        setHistory([]);
+        return [];
+      }
     };
 
-    const executeCommand = (cmd) => {
-      const trimmedCmd = cmd.trim();
-      const [command, ...args] = trimmedCmd.toLowerCase().split(' ');
-      
-      setHistory(prev => [...prev, { type: 'input', content: `┌──(vishnu@devos)-[~]` }, { type: 'input', content: `└─$ ${cmd}` }]);
-      
-      if (commands[command]) {
-        if (command === 'clear') {
-          setHistory([]);
-        } else {
-          setHistory(prev => [...prev, { type: 'output', content: commands[command] }]);
-        }
-      } else if (command === 'ask') {
-        const question = args.join(' ');
-        if (question) {
-          const responses = [
-            `🤖 AI Response: "${question}" - Great question! As an AI-powered developer, I believe the key is combining technical expertise with creative problem-solving.`,
-            `🤖 AI Response: Regarding "${question}" - This touches on cutting-edge technology. My experience shows that innovation happens at the intersection of AI and human creativity.`,
-            `🤖 AI Response: You asked about "${question}" - From my work in AI/ML, I can say that the future lies in building intelligent systems that augment human capabilities.`,
-            `🤖 AI Response: Interesting query: "${question}" - Based on my portfolio projects, I've found that user-centric design combined with powerful AI creates the most impact.`
-          ];
-          const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-          setHistory(prev => [...prev, { type: 'ai', content: randomResponse }]);
-        } else {
-          setHistory(prev => [...prev, { type: 'error', content: 'Usage: ask [your question]' }]);
-        }
-      } else if (trimmedCmd) {
-        setHistory(prev => [...prev, { 
-          type: 'error', 
-          content: `Command not found: ${command}
-Did you mean one of these?
-  • help     - Show available commands
-  • projects - View project portfolio  
-  • skills   - Display technical skills
-  • contact  - Get contact information` 
-        }]);
-      }
-      setCurrentInput('');
-    };
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!input.trim()) return;
 
-    const handleKeyPress = (e) => {
-      if (e.key === 'Enter') {
-        executeCommand(currentInput);
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        // Simple autocomplete
-        const availableCommands = Object.keys(commands);
-        const matches = availableCommands.filter(cmd => cmd.startsWith(currentInput.toLowerCase()));
-        if (matches.length === 1) {
-          setCurrentInput(matches[0]);
-        }
+      const cmd = input.trim().toLowerCase();
+      const newHistory = [...history, `~ ${input}`];
+
+      if (commands[cmd]) {
+        const output = commands[cmd]();
+        setHistory([...newHistory, ...output]);
+      } else {
+        setHistory([...newHistory, `Command not found: ${input}`, 'Type "help" for available commands', '']);
       }
+
+      setInput('');
     };
 
     return (
-      <div className="h-full bg-gray-900 text-green-400 font-mono p-6 overflow-auto">
-        <div className="space-y-1">
-          {history.map((entry, index) => (
-            <div
-              key={index}
-              className={`${
-                entry.type === 'input' ? 'text-cyan-400' : 
-                entry.type === 'system' ? 'text-yellow-400' : 
-                entry.type === 'error' ? 'text-red-400' :
-                entry.type === 'ai' ? 'text-purple-400' :
-                'text-green-400'
-              } whitespace-pre-wrap`}
-            >
-              {entry.content.split('\n').map((line, lineIndex) => (
-                <div key={lineIndex}>{line}</div>
-              ))}
+      <div className="h-full flex flex-col font-mono text-sm">
+        <div className="flex-1 overflow-y-auto p-4 bg-black text-green-400">
+          {history.map((line, index) => (
+            <div key={index} className="whitespace-pre-wrap">
+              {line}
             </div>
           ))}
         </div>
-        
-        <div className="flex items-center mt-4">
-          <span className="text-cyan-400">┌──(vishnu@devos)-[~]</span>
-        </div>
-        <div className="flex items-center">
-          <span className="text-cyan-400">└─$ </span>
+        <form onSubmit={handleSubmit} className="flex items-center p-4 bg-black border-t border-gray-800">
+          <span className="text-green-400 mr-2">~$</span>
           <input
             type="text"
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="flex-1 bg-transparent outline-none text-green-400 ml-1 font-mono"
-            placeholder="Type 'help' for commands..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="flex-1 bg-transparent text-green-400 outline-none"
+            placeholder="Enter command..."
             autoFocus
           />
-          <span className="animate-pulse text-green-400">█</span>
-        </div>
+        </form>
       </div>
     );
   };
 
-  // Contact content
+  // Contact Content
   const ContactContent = () => {
     const [formData, setFormData] = useState({
       name: '',
       email: '',
-      subject: '',
       message: ''
     });
-    const [sending, setSending] = useState(false);
-    const [sent, setSent] = useState(false);
 
-    const handleSubmit = async () => {
-      setSending(true);
-      // Simulate API call
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+      
+      // Simulate form submission
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setSending(false);
-      setSent(true);
-      setTimeout(() => setSent(false), 4000);
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      
+      setIsSubmitting(false);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', message: '' });
+      
+      setTimeout(() => setSubmitted(false), 3000);
     };
 
-    const socials = [
-      { 
-        name: 'GitHub', 
-        icon: Github, 
-        url: 'https://github.com/vishnu-dev', 
-        color: 'bg-gradient-to-br from-gray-800 to-gray-900',
-        username: '@vishnu-dev',
-        followers: '2.1K',
-        description: 'Open source projects & contributions'
-      },
-      { 
-        name: 'LinkedIn', 
-        icon: Linkedin, 
-        url: 'https://linkedin.com/in/vishnu-dev', 
-        color: 'bg-gradient-to-br from-blue-600 to-blue-700',
-        username: 'vishnu-dev',
-        followers: '5.8K',
-        description: 'Professional network & career updates'
-      },
-      { 
-        name: 'Twitter', 
-        icon: Twitter, 
-        url: 'https://twitter.com/vishnu_dev', 
-        color: 'bg-gradient-to-br from-blue-400 to-blue-500',
-        username: '@vishnu_dev',
-        followers: '3.2K',
-        description: 'Tech insights & industry thoughts'
-      },
-    ];
-
-    const quickContacts = [
-      {
-        icon: Mail,
-        label: 'Email',
-        value: 'vishnu@developer.com',
-        action: 'mailto:vishnu@developer.com'
-      },
-      {
-        icon: MapPin,
-        label: 'Location',
-        value: 'Available Worldwide',
-        action: null
-      },
-      {
-        icon: Calendar,
-        label: 'Timezone',
-        value: 'UTC+5:30 (IST)',
-        action: null
-      }
+    const socialLinks = [
+      { name: 'GitHub', icon: Github, url: '#', color: 'hover:text-gray-900' },
+      { name: 'LinkedIn', icon: Linkedin, url: '#', color: 'hover:text-blue-600' },
+      { name: 'Twitter', icon: Twitter, url: '#', color: 'hover:text-blue-400' },
+      { name: 'Email', icon: Mail, url: 'mailto:vishnu@example.com', color: 'hover:text-red-500' }
     ];
 
     return (
@@ -1392,197 +1677,172 @@ Did you mean one of these?
           <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
             Let's Connect
           </h2>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
-            Ready to collaborate on your next project? I'd love to hear from you and discuss how we can work together.
+          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Ready to collaborate on your next project or just want to say hello?
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Contact Form */}
           <div className={`${darkMode ? 'bg-gray-700/30' : 'bg-gray-50'} rounded-xl p-6`}>
-            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6 flex items-center gap-2`}>
-              <Mail className="w-5 h-5 text-blue-500" />
+            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
               Send Message
             </h3>
             
-            <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+            {submitted ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h4 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  Message Sent!
+                </h4>
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Thanks for reaching out. I'll get back to you soon!
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Name *
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Name
                   </label>
                   <input
                     type="text"
+                    required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className={`w-full p-3 rounded-lg border transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    className={`w-full p-3 border rounded-lg ${
+                      darkMode 
+                        ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
-                    placeholder="Your full name"
+                    placeholder="Your name"
                   />
                 </div>
                 
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Email *
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Email
                   </label>
                   <input
                     type="email"
+                    required
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className={`w-full p-3 rounded-lg border transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    className={`w-full p-3 border rounded-lg ${
+                      darkMode 
+                        ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
-                    placeholder="your.email@example.com"
+                    placeholder="your@email.com"
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                  className={`w-full p-3 rounded-lg border transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
-                  placeholder="Project discussion, collaboration, etc."
-                />
-              </div>
-              
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Message *
-                </label>
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  rows="5"
-                  className={`w-full p-3 rounded-lg border transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
-                  placeholder="Tell me about your project, requirements, timeline, or any questions you have..."
-                />
-              </div>
-              
-              <button
-                onClick={handleSubmit}
-                disabled={sending || !formData.name || !formData.email || !formData.subject || !formData.message}
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                  sending 
-                    ? 'bg-gray-500 cursor-not-allowed text-white' 
-                    : sent
-                    ? 'bg-green-500 text-white transform scale-105'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transform hover:scale-105 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none'
-                }`}
-              >
-                {sending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Sending Message...
-                  </>
-                ) : sent ? (
-                  <>
-                    <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                      <div className="w-2 h-1 bg-green-500 rounded"></div>
-                    </div>
-                    Message Sent Successfully!
-                  </>
-                ) : (
-                  <>
-                    <Mail size={16} />
-                    Send Message
-                  </>
-                )}
-              </button>
-            </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Message
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    className={`w-full p-3 border rounded-lg resize-none ${
+                      darkMode 
+                        ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="Tell me about your project or just say hello..."
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail size={16} />
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Contact Info & Social */}
           <div className="space-y-6">
-            {/* Quick Contact */}
-            <div>
+            <div className={`${darkMode ? 'bg-gray-700/30' : 'bg-gray-50'} rounded-xl p-6`}>
               <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
-                Quick Contact
+                Get in Touch
               </h3>
-              <div className="space-y-3">
-                {quickContacts.map((contact) => (
-                  <div 
-                    key={contact.label}
-                    className={`flex items-center gap-4 p-4 ${darkMode ? 'bg-gray-700/30' : 'bg-gray-100'} rounded-lg transition-all hover:scale-105 ${contact.action ? 'cursor-pointer hover:shadow-lg' : ''}`}
-                    onClick={() => contact.action && window.open(contact.action, '_blank')}
-                  >
-                    <div className="p-2 bg-blue-500 rounded-lg">
-                      <contact.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {contact.label}
-                      </div>
-                      <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {contact.value}
-                      </div>
-                    </div>
-                    {contact.action && <ExternalLink className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} ml-auto`} />}
-                  </div>
-                ))}
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Mail className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    vishnu@example.com
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <MapPin className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    India (Working Globally)
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Social Links */}
-            <div>
+            <div className={`${darkMode ? 'bg-gray-700/30' : 'bg-gray-50'} rounded-xl p-6`}>
               <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
-                Social Presence
+                Follow Me
               </h3>
-              <div className="space-y-4">
-                {socials.map((social) => (
+              
+              <div className="grid grid-cols-2 gap-4">
+                {socialLinks.map((social) => (
                   <a
                     key={social.name}
                     href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-4 p-4 ${social.color} text-white rounded-xl transition-all hover:scale-105 hover:shadow-xl group`}
+                    className={`flex items-center gap-3 p-3 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-300 hover:scale-105 ${
+                      darkMode ? 'border-gray-600 hover:border-gray-500 text-gray-300' : 'text-gray-600'
+                    } ${social.color}`}
                   >
-                    <div className="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors">
-                      <social.icon size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-lg">{social.name}</div>
-                      <div className="text-white/80 text-sm">{social.username}</div>
-                      <div className="text-white/60 text-xs mt-1">{social.description}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold">{social.followers}</div>
-                      <div className="text-white/60 text-xs">followers</div>
-                    </div>
-                    <ExternalLink className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+                    <social.icon className="w-5 h-5" />
+                    <span className="font-medium">{social.name}</span>
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Availability Status */}
-            <div className={`${darkMode ? 'bg-green-900/20 border-green-500/30' : 'bg-green-50 border-green-200'} border rounded-xl p-6`}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <h4 className={`font-semibold ${darkMode ? 'text-green-400' : 'text-green-800'}`}>
-                  Currently Available
-                </h4>
-              </div>
-              <p className={`text-sm ${darkMode ? 'text-green-300' : 'text-green-700'} mb-4`}>
-                Open to new opportunities and exciting projects. Let's build something amazing together!
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className={`font-medium ${darkMode ? 'text-green-400' : 'text-green-800'}`}>Response Time</div>
-                  <div className={`${darkMode ? 'text-green-300' : 'text-green-700'}`}>Within 24 hours</div>
+            <div className={`${darkMode ? 'bg-gray-700/30' : 'bg-gray-50'} rounded-xl p-6`}>
+              <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                Quick Stats
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <AnimatedCounter end={24} />h
+                  </div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Response Time</div>
                 </div>
-                <div>
-                  <div className={`font-medium ${darkMode ? 'text-green-400' : 'text-green-800'}`}>Project Type</div>
-                  <div className={`${darkMode ? 'text-green-300' : 'text-green-700'}`}>Full-stack & AI/ML</div>
+                
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <AnimatedCounter end={100} />%
+                  </div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Project Success</div>
                 </div>
               </div>
             </div>
@@ -1592,11 +1852,12 @@ Did you mean one of these?
     );
   };
 
-  return (
-    <div className="font-sans">
-      {currentView === 'boot' ? <BootScreen /> : <Desktop />}
-    </div>
-  );
+  // Main render logic
+  if (currentView === 'boot') {
+    return <BootScreen />;
+  }
+
+  return <Desktop />;
 };
 
 export default VishnuDeveloperOS;
